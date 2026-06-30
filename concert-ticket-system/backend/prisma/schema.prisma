@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id          String       @id @default(uuid())
+  name        String
+  description String?
+  venue       String
+  eventDate   DateTime
+  imageUrl    String?
+  isActive    Boolean      @default(true)
+  ticketTypes TicketType[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("events")
+}
+
+model TicketType {
+  id                String       @id @default(uuid())
+  eventId           String
+  event             Event        @relation(fields: [eventId], references: [id])
+  name              String
+  description       String?
+  price             Decimal      @db.Decimal(10, 2)
+  totalQuantity     Int
+  availableQuantity Int
+  maxPerOrder       Int          @default(4)
+  holds             TicketHold[]
+  tickets           Ticket[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@map("ticket_types")
+}
+
+model TicketHold {
+  id             String     @id @default(uuid())
+  ticketTypeId   String
+  ticketType     TicketType @relation(fields: [ticketTypeId], references: [id])
+  sessionId      String
+  customerName   String?
+  customerEmail  String?
+  quantity       Int        @default(1)
+  status         HoldStatus @default(PENDING)
+  expiresAt      DateTime
+  confirmedAt    DateTime?
+  releasedAt     DateTime?
+  ticket         Ticket?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([sessionId])
+  @@index([status, expiresAt])
+  @@map("ticket_holds")
+}
+
+model Ticket {
+  id           String     @id @default(uuid())
+  ticketTypeId String
+  ticketType   TicketType @relation(fields: [ticketTypeId], references: [id])
+  holdId       String     @unique
+  hold         TicketHold @relation(fields: [holdId], references: [id])
+  ticketCode   String     @unique @default(uuid())
+  customerName String
+  customerEmail String
+  quantity     Int        @default(1)
+  priceAtSale  Decimal    @db.Decimal(10, 2)
+  totalAmount  Decimal    @db.Decimal(10, 2)
+  status       TicketStatus @default(SOLD)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([customerEmail])
+  @@index([ticketCode])
+  @@map("tickets")
+}
+
+enum HoldStatus {
+  PENDING
+  CONFIRMED
+  RELEASED
+  EXPIRED
+}
+
+enum TicketStatus {
+  SOLD
+  REFUNDED
+  CANCELLED
+}
