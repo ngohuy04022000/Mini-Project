@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
+import { Prisma } from '@prisma/client';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
 import { env } from '../config/env';
@@ -32,6 +33,30 @@ export function errorHandler(
         code: 'VALIDATION_ERROR',
         message: 'Dữ liệu đầu vào không hợp lệ',
         details,
+      },
+    } satisfies ApiResponse);
+    return;
+  }
+
+  // Prisma connection pool timeout → 503
+  if (
+    err instanceof Prisma.PrismaClientKnownRequestError ||
+    err instanceof Prisma.PrismaClientUnknownRequestError
+  ) {
+    const is503 =
+      err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2024';
+    if (is503) {
+      logger.warn('Prisma connection pool timeout (P2024)');
+    } else {
+      logger.error('Prisma request error:', err);
+    }
+    res.status(is503 ? 503 : 500).json({
+      success: false,
+      error: {
+        code: is503 ? 'SERVICE_UNAVAILABLE' : 'DATABASE_ERROR',
+        message: is503
+          ? 'Hệ thống đang quá tải. Vui lòng thử lại sau vài giây.'
+          : 'Đã xảy ra lỗi cơ sở dữ liệu. Vui lòng thử lại.',
       },
     } satisfies ApiResponse);
     return;

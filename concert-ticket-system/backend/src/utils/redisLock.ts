@@ -1,4 +1,5 @@
 import { getRedisClient } from '../config/redis';
+import { ServiceUnavailableError } from './AppError';
 import { logger } from './logger';
 
 const LOCK_TTL_MS = 10_000;
@@ -52,13 +53,22 @@ export async function withLock<T>(
   retries = DEFAULT_RETRIES,
 ): Promise<T> {
   for (let attempt = 0; attempt < retries; attempt++) {
-    const lockValue = await acquireLock(resource);
+    let lockValue: string | null;
+    try {
+      lockValue = await acquireLock(resource);
+    } catch (redisErr) {
+      logger.error(`Redis error acquiring lock for ${resource}:`, redisErr);
+      throw new ServiceUnavailableError();
+    }
 
     if (lockValue) {
       try {
         return await fn();
       } finally {
-        await releaseLock(resource, lockValue);
+        // Swallow release errors — lock TTL guarantees eventual release.
+        await releaseLock(resource, lockValue).catch((err) =>
+          logger.warn(`Failed to release lock for ${resource}:`, err),
+        );
       }
     }
 
@@ -67,5 +77,7 @@ export async function withLock<T>(
     }
   }
 
-  throw new Error(`Failed to acquire lock for ${resource} after ${retries} attempts`);
+  throw new ServiceUnavailableError(
+    'Hệ thống đang bận, không thể xử lý yêu cầu. Vui lòng thử lại sau vài giây.',
+  );
 }

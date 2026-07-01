@@ -48,3 +48,9 @@ export class HoldNotFoundError extends AppError {
     super('Không tìm thấy vé đang giữ. Vui lòng thử lại.', 404, 'HOLD_NOT_FOUND');
   }
 }
+
+export class ServiceUnavailableError extends AppError {
+  constructor(message = 'Hệ thống đang quá tải. Vui lòng thử lại sau vài giây.') {
+    super(message, 503, 'SERVICE_UNAVAILABLE');
+  }
+}

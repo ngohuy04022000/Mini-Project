@@ -4,8 +4,11 @@ import {
   getActiveHoldsHandler,
   addSlotsHandler,
 } from '../controllers/ticketController';
+import { requireAdminKey } from '../middleware/adminAuth';
 
 const router = Router();
+
+router.use(requireAdminKey);
 
 router.get('/stats', getAdminStatsHandler);
 router.get('/holds', getActiveHoldsHandler);

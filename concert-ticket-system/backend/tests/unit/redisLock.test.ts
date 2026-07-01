@@ -84,12 +84,18 @@ describe('Redis Distributed Lock', () => {
       expect(mockEval).toHaveBeenCalled(); // Lock was released
     });
 
-    it('should retry and throw when lock cannot be acquired after all retries', async () => {
+    it('should retry and throw ServiceUnavailableError when lock cannot be acquired after all retries', async () => {
       mockSet.mockResolvedValue(null); // Always fails to acquire
 
-      await expect(withLock('test-resource', jest.fn(), 2)).rejects.toThrow(
-        'Failed to acquire lock',
-      );
+      const err = await withLock('test-resource', jest.fn(), 2).catch((e) => e);
+      expect(err).toMatchObject({ code: 'SERVICE_UNAVAILABLE', statusCode: 503 });
+    });
+
+    it('should throw ServiceUnavailableError immediately when Redis itself throws', async () => {
+      mockSet.mockRejectedValue(new Error('Redis connection refused'));
+
+      const err = await withLock('test-resource', jest.fn(), 2).catch((e) => e);
+      expect(err).toMatchObject({ code: 'SERVICE_UNAVAILABLE', statusCode: 503 });
     });
   });
 });

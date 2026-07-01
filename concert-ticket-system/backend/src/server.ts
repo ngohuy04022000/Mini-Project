@@ -4,7 +4,7 @@ import app from './app';
 import { env } from './config/env';
 import { connectDatabase, disconnectDatabase } from './config/database';
 import { connectRedis, disconnectRedis } from './config/redis';
-import { setSocketServer, broadcastTicketUpdate } from './services/socketService';
+import { setSocketServer, emitCurrentCountsToSocket } from './services/socketService';
 import { startHoldCleanupJob, stopHoldCleanupJob } from './services/holdCleanupService';
 import { logger } from './utils/logger';
 
@@ -26,8 +26,8 @@ setSocketServer(io);
 io.on('connection', (socket) => {
   logger.debug(`Socket connected: ${socket.id}`);
 
-  // Send current ticket counts on connect
-  broadcastTicketUpdate().catch((err) =>
+  // Send current ticket counts only to this new socket (cached for 1s to absorb bursts).
+  emitCurrentCountsToSocket(socket).catch((err) =>
     logger.error('Failed to send initial ticket counts:', err),
   );
 

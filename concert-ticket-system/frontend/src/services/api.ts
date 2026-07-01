@@ -105,13 +105,18 @@ export async function processPayment(params: {
   return data.data!;
 }
 
+// Admin key is optional: set VITE_ADMIN_API_KEY in frontend/.env.local to match
+// the server's ADMIN_API_KEY. If neither is set, admin routes are open (dev mode).
+const ADMIN_KEY = import.meta.env.VITE_ADMIN_API_KEY as string | undefined;
+const adminHeaders = ADMIN_KEY ? { 'x-admin-key': ADMIN_KEY } : {};
+
 export async function fetchAdminStats(): Promise<AdminStats> {
-  const { data } = await api.get<ApiResponse<AdminStats>>('/admin/stats');
+  const { data } = await api.get<ApiResponse<AdminStats>>('/admin/stats', { headers: adminHeaders });
   return data.data!;
 }
 
 export async function fetchActiveHolds(): Promise<ActiveHold[]> {
-  const { data } = await api.get<ApiResponse<ActiveHold[]>>('/admin/holds');
+  const { data } = await api.get<ApiResponse<ActiveHold[]>>('/admin/holds', { headers: adminHeaders });
   return data.data!;
 }
 
@@ -122,6 +127,7 @@ export async function addTicketSlots(
   const { data } = await api.post<ApiResponse<AddSlotsResponse>>(
     `/admin/ticket-types/${ticketTypeId}/slots`,
     { additionalSlots },
+    { headers: adminHeaders },
   );
   return data.data!;
 }
