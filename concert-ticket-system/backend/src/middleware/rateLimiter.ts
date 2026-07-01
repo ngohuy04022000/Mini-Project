@@ -1,8 +1,9 @@
 import rateLimit from 'express-rate-limit';
+import { env } from '../config/env';
 
 export const apiRateLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 60,
+  windowMs: 60 * 1000,
+  max: env.RATE_LIMIT_MAX,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -16,11 +17,11 @@ export const apiRateLimiter = rateLimit({
 
 // Stricter limit for hold endpoint to prevent abuse
 export const holdRateLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000,
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.headers['x-session-id'] as string || req.ip || 'unknown',
+  keyGenerator: (req) => (req.headers['x-session-id'] as string) || req.ip || 'unknown',
   message: {
     success: false,
     error: {

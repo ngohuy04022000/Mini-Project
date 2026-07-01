@@ -13,6 +13,7 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().default('http://localhost:5173'),
   // Optional: if set, all /api/admin/* requests must supply this value in x-admin-key header.
   ADMIN_API_KEY: z.string().min(8).optional(),
+  RATE_LIMIT_MAX: z.string().default('60').transform(Number),
 });
 
 const result = envSchema.safeParse(process.env);

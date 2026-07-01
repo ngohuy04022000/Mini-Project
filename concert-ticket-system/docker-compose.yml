@@ -46,6 +46,7 @@ services:
       JWT_SECRET: prod-secret-key-change-this-in-real-production
       HOLD_DURATION_MINUTES: 5
       FRONTEND_URL: http://localhost:5173
+      RATE_LIMIT_MAX: '10000'
     depends_on:
       postgres:
         condition: service_healthy
