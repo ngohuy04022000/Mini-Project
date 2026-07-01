@@ -121,7 +121,10 @@ export async function processPayment(input: PaymentInput) {
 
   // Process payment in a transaction
   const ticket = await prisma.$transaction(async (tx) => {
-    await confirmHold(holdId, tx);
+    const confirmed = await confirmHold(holdId, tx);
+    if (confirmed === 0) {
+      throw new ConflictError('Vé này đã được thanh toán rồi.');
+    }
 
     const priceAtSale = hold.ticketType.price;
     const totalAmount = new Prisma.Decimal(priceAtSale.toString()).mul(hold.quantity);

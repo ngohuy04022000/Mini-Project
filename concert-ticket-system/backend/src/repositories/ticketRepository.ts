@@ -85,11 +85,12 @@ export async function batchExpireHolds(
   return result.count;
 }
 
-export async function confirmHold(holdId: string, tx: Prisma.TransactionClient) {
-  return tx.ticketHold.update({
-    where: { id: holdId },
+export async function confirmHold(holdId: string, tx: Prisma.TransactionClient): Promise<number> {
+  const result = await tx.ticketHold.updateMany({
+    where: { id: holdId, status: HoldStatus.PENDING },
     data: { status: HoldStatus.CONFIRMED, confirmedAt: new Date() },
   });
+  return result.count;
 }
 
 export async function releaseHold(holdId: string, tx?: Prisma.TransactionClient) {

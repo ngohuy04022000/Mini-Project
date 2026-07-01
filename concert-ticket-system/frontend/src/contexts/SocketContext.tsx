@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import type { TicketCountUpdate } from '../types';
 
@@ -35,12 +35,15 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  function onHoldExpired(callback: (data: { holdId: string; sessionId: string }) => void) {
-    const socket = socketRef.current;
-    if (!socket) return () => {};
-    socket.on('hold_expired', callback);
-    return () => socket.off('hold_expired', callback);
-  }
+  const onHoldExpired = useCallback(
+    (callback: (data: { holdId: string; sessionId: string }) => void) => {
+      const socket = socketRef.current;
+      if (!socket) return () => {};
+      socket.on('hold_expired', callback);
+      return () => socket.off('hold_expired', callback);
+    },
+    [],
+  );
 
   return (
     <SocketContext.Provider value={{ isConnected, latestTicketCounts, onHoldExpired }}>

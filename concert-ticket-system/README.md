@@ -1,7 +1,7 @@
 # 🎵 ConcertTix - Hệ Thống Đặt Vé Concert
 
-**Tác giả:** NamViet Media Dev Team  
-**Ngày hoàn thiện:** 30/06/2026
+**Tác giả:** Ngô Trí Huy — ngohuy04022000@gmail.com  
+**Ngày hoàn thiện:** 01/07/2026
 
 ---
 

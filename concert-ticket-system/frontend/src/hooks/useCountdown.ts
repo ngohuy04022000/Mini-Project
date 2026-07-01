@@ -17,6 +17,14 @@ export function useCountdown(initialSeconds: number, onExpire?: () => void): Cou
     setSecondsRemaining(Math.max(0, newSeconds));
   }, []);
 
+  // If the timer is already expired on mount, fire onExpire immediately.
+  useEffect(() => {
+    if (initialSeconds <= 0) {
+      onExpireRef.current?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (secondsRemaining <= 0) return;
 

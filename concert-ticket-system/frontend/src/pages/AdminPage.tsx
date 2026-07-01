@@ -241,11 +241,12 @@ export function AdminPage() {
               />
               <StatCard
                 title="Tỷ lệ bán"
-                value={`${Math.round(
-                  (stats.ticketTypes.reduce((s, t) => s + t.soldQuantity, 0) /
-                    stats.ticketTypes.reduce((s, t) => s + t.totalQuantity, 0)) *
-                    100,
-                )}%`}
+                value={(() => {
+                  const total = stats.ticketTypes.reduce((s, t) => s + t.totalQuantity, 0);
+                  if (total === 0) return '—';
+                  const sold = stats.ticketTypes.reduce((s, t) => s + t.soldQuantity, 0);
+                  return `${Math.round((sold / total) * 100)}%`;
+                })()}
                 icon={TrendingUp}
                 color="text-blue-400"
               />

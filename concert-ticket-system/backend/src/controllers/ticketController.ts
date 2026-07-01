@@ -15,7 +15,7 @@ import {
 } from '../repositories/ticketRepository';
 import { broadcastTicketUpdate } from '../services/socketService';
 import { scheduleHoldExpiry } from '../services/holdCleanupService';
-import { HoldNotFoundError, NotFoundError } from '../utils/AppError';
+import { HoldNotFoundError, NotFoundError, ValidationError } from '../utils/AppError';
 
 export const holdTicketSchema = z.object({
   ticketTypeId: z.string().uuid('ticketTypeId phải là UUID hợp lệ'),
@@ -69,8 +69,7 @@ export async function processPaymentHandler(req: Request, res: Response, next: N
     const validated = paymentSchema.parse(req.body);
     const ticket = await processPayment(validated);
 
-    // No broadcast here: availableQuantity was already decremented at hold time,
-    // so a successful payment doesn't change the public ticket counts.
+    invalidateStatsCache();
 
     res.status(200).json({
       success: true,
@@ -104,7 +103,7 @@ export async function releaseHoldHandler(req: Request, res: Response, next: Next
 export async function getHoldStatusHandler(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { holdId } = req.params;
-    const { sessionId } = req.query;
+    const sessionId = String(req.query.sessionId ?? '');
 
     const hold = await findHoldById(holdId);
 
@@ -203,7 +202,7 @@ const addSlotsSchema = z.object({
 export async function addSlotsHandler(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { id } = req.params;
-    if (!id) throw new Error('id is required');
+    if (!id) throw new ValidationError('id là bắt buộc');
     const { additionalSlots } = addSlotsSchema.parse(req.body);
 
     const ticketType = await addTicketTypeSlots(id, additionalSlots);
